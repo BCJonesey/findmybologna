@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>Find My Bologna!</title>
+    <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #map {
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script>
+var map,bolognaMarker,selfMarker;
+
+function initMap() {
+  var myLatLng = {lat: 33.429778, lng: -111.940293};
+
+  map = new google.maps.Map(document.getElementById('map'), {
+    zoom: 17,
+    center: myLatLng
+  });
+  var boloSize = 40;
+  var bolognaImage = {
+    url: "/assets/mdot.png",
+    scaledSize: {height:boloSize, width:boloSize},
+    anchor: {x:boloSize/2, y:boloSize/2}
+  }
+  bolognaMarker = new google.maps.Marker({
+    position: myLatLng,
+    map: map,
+    icon: bolognaImage,
+    title: 'My Bologna!'
+  });
+
+  navigator.geolocation.getCurrentPosition(success, error, options);
+
+}
+
+var options = {
+  enableHighAccuracy: true,
+  timeout: 5000,
+  maximumAge: 0
+};
+
+function success(pos) {
+  var crd = pos.coords;
+
+  var latLong = new google.maps.LatLng(crd.latitude, crd.longitude);
+  if(typeof selfMarker === 'undefined'){
+    selfMarker = new google.maps.Marker({
+      position: latLong,
+      map: map,
+      title: 'you',
+      clickable: false,
+      icon: new google.maps.MarkerImage('//maps.gstatic.com/mapfiles/mobile/mobileimgs2.png',
+                                                      new google.maps.Size(22,22),
+                                                      new google.maps.Point(0,18),
+                                                      new google.maps.Point(11,11)),
+    });
+  }else{
+    selfMarker.setPosition(latLong);
+  }
+  updateZoom();
+};
+
+function error(err) {
+  console.warn('ERROR(' + err.code + '): ' + err.message);
+};
+
+function updateZoom(){
+  var latlngbounds = new google.maps.LatLngBounds();
+  if(!(typeof selfMarker === 'undefined')){
+    latlngbounds.extend(selfMarker.getPosition());
+  }
+  if(!(typeof bolognaMarker === 'undefined')){
+    latlngbounds.extend(bolognaMarker.getPosition());
+  }
+  map.fitBounds(latlngbounds);
+}
+
+
+    </script>
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=<%=ENV['GOOGLE_MAPS_API_KEY']%>&signed_in=true&callback=initMap"></script>
+  </body>
+</html>
